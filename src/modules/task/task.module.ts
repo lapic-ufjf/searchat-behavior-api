@@ -17,7 +17,7 @@ import { TaskService } from './task.service';
   imports: [
     TypeOrmModule.forFeature([Task]),
     forwardRef(() => ExperimentModule),
-    SurveyModule,
+    forwardRef(() => SurveyModule),
     forwardRef(() => TaskQuestionMapModule),
   ],
   providers: [TaskService],
