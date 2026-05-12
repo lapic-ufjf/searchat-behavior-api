@@ -7,6 +7,7 @@ import { Task } from 'src/modules/task/entities/task.entity';
 import { User } from 'src/modules/user/entity/user.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
@@ -28,6 +29,12 @@ export class LlmSession {
 
   @Column({ nullable: true, type: 'text' })
   systemInstruction?: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  title?: string | null;
+
+  @CreateDateColumn()
+  createdAt: Date;
 
   @OneToMany(() => LlmMessage, (msg) => msg.session, { cascade: true })
   messages: LlmMessage[];

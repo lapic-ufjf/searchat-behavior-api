@@ -10,6 +10,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ExperimentService } from '../experiment/experiment.service';
 import { SurveyService } from '../survey/survey.service';
 import { TaskQuestionMapService } from '../task-question-map/task-question-map.service';
+import { TaskSurveyService } from '../task-survey/task-survey.service';
 import { Task } from './entities/task.entity';
 import { TaskService } from './task.service';
 
@@ -55,6 +56,15 @@ describe('TaskService', () => {
           provide: TaskQuestionMapService,
           useValue: {
             findQuestionsByTask: jest.fn(),
+          },
+        },
+        {
+          provide: TaskSurveyService,
+          useValue: {
+            link: jest.fn(),
+            unlink: jest.fn(),
+            findSurveysByTask: jest.fn(),
+            findTasksBySurvey: jest.fn(),
           },
         },
       ],

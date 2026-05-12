@@ -9,6 +9,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -26,7 +27,7 @@ import {Response} from 'express';
 
 import {LlmProviderModelsResponseDto} from './dto/llm-provider-models-response.dto';
 import {LlmProviderResponseDto} from './dto/llm-provider-response.dto';
-import {LlmSessionResponseDto} from './dto/llm-session-response.dto';
+import {LlmSessionResponseDto, LlmSessionSummaryDto} from './dto/llm-session-response.dto';
 import {LlmSessionService} from './llm-session.service';
 
 @ApiTags('LLM Session')
@@ -66,14 +67,31 @@ export class LlmSessionController {
     return this.llmSessionService.getProviderModels(provider);
   }
 
+  @Get()
+  @ApiOperation({summary: 'List LLM sessions for a user and task'})
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions list.',
+    type: LlmSessionSummaryDto,
+    isArray: true,
+  })
+  async listSessions(
+    @Query('userId') userId: string,
+    @Query('taskId') taskId: string,
+  ): Promise<LlmSessionSummaryDto[]> {
+    return this.llmSessionService.listSessions(userId, taskId);
+  }
+
   @Post('start')
-  @ApiOperation({summary: 'Start an LLM session'})
+  @ApiOperation({summary: 'Start or resume an LLM session'})
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
         taskId: {type: 'string', description: 'Task ID'},
         userId: {type: 'string', description: 'User ID'},
+        sessionId: {type: 'string', description: 'Load a specific session by ID'},
+        forceNew: {type: 'boolean', description: 'Force creation of a new session'},
       },
       required: ['taskId', 'userId'],
     },
@@ -83,8 +101,13 @@ export class LlmSessionController {
     description: 'Session started.',
     type: LlmSessionResponseDto,
   })
-  async startSession(@Body() body: {taskId: string; userId: string}) {
-    return this.llmSessionService.startSession(body.userId, body.taskId);
+  async startSession(
+    @Body() body: {taskId: string; userId: string; sessionId?: string; forceNew?: boolean},
+  ) {
+    return this.llmSessionService.startSession(body.userId, body.taskId, {
+      sessionId: body.sessionId,
+      forceNew: body.forceNew,
+    });
   }
 
   @Post(':id/message')

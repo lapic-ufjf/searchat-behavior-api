@@ -11,6 +11,7 @@ import {
 } from '@langchain/core/messages';
 import {ChatOpenAI} from '@langchain/openai';
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -65,15 +66,28 @@ export class LlmSessionService {
     };
   }
 
-  async startSession(userId: string, taskId: string): Promise<LlmSession> {
-    const existingSession = await this.llmSessionRepository.findOne({
-      where: {user: {_id: userId}, task: {_id: taskId}},
-      relations: ['messages'],
-      order: {messages: {createdAt: 'ASC'}},
-    });
+  async startSession(
+    userId: string,
+    taskId: string,
+    options?: {sessionId?: string; forceNew?: boolean},
+  ): Promise<LlmSession> {
+    if (options?.sessionId) {
+      const session = await this.llmSessionRepository.findOne({
+        where: {id: options.sessionId, user: {_id: userId}, task: {_id: taskId}},
+        relations: ['messages'],
+        order: {messages: {createdAt: 'ASC'}},
+      });
+      if (!session) throw new NotFoundException('Session not found');
+      return session;
+    }
 
-    if (existingSession) {
-      return existingSession;
+    if (!options?.forceNew) {
+      const existingSession = await this.llmSessionRepository.findOne({
+        where: {user: {_id: userId}, task: {_id: taskId}},
+        relations: ['messages'],
+        order: {createdAt: 'DESC', messages: {createdAt: 'ASC'}},
+      });
+      if (existingSession) return existingSession;
     }
 
     const task = await this.taskRepository
@@ -81,17 +95,33 @@ export class LlmSessionService {
       .addSelect('task.provider_config')
       .where('task._id = :taskId', {taskId})
       .getOne();
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
+    if (!task) throw new NotFoundException('Task not found');
+
+    const count = await this.llmSessionRepository.count({
+      where: {user: {_id: userId}, task: {_id: taskId}},
+    });
 
     const newSession = this.llmSessionRepository.create({
       user: {_id: userId} as User,
       task: task,
       systemInstruction: task.provider_config?.systemInstruction ?? null,
+      title: `Conversa ${count + 1}`,
     });
 
     return await this.llmSessionRepository.save(newSession);
+  }
+
+  async listSessions(
+    userId: string,
+    taskId: string,
+  ): Promise<{id: string; title: string | null; createdAt: Date}[]> {
+    if (!userId || !taskId) throw new BadRequestException('userId and taskId are required');
+    const sessions = await this.llmSessionRepository.find({
+      where: {user: {_id: userId}, task: {_id: taskId}},
+      select: ['id', 'title', 'createdAt'],
+      order: {createdAt: 'ASC'},
+    });
+    return sessions.map((s) => ({id: s.id, title: s.title ?? null, createdAt: s.createdAt}));
   }
 
   async processChatMessage(sessionId: string, userId: string, content: string) {

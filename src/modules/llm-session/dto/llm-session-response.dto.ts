@@ -19,9 +19,26 @@ export class LlmMessageResponseDto {
   createdAt: Date;
 }
 
+export class LlmSessionSummaryDto {
+  @ApiProperty({ description: 'Session ID' })
+  id: string;
+
+  @ApiProperty({ description: 'Session title', nullable: true })
+  title: string | null;
+
+  @ApiProperty({ description: 'Session creation date' })
+  createdAt: Date;
+}
+
 export class LlmSessionResponseDto {
   @ApiProperty({ description: 'Session ID', example: '8e2c1a3f-7a4a-4029-92f9-4b0d7a5d2a88' })
   id: string;
+
+  @ApiProperty({ description: 'Session title', nullable: true })
+  title?: string | null;
+
+  @ApiProperty({ description: 'Session creation date' })
+  createdAt?: Date;
 
   @ApiProperty({ description: 'Session messages', type: [LlmMessageResponseDto], required: false })
   messages?: LlmMessageResponseDto[];
