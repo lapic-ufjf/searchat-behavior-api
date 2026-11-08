@@ -3,8 +3,11 @@
  * Licensed under The MIT License [see LICENSE for details]
  */
 
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsArray, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+
+import { IcfSectionDto } from './icf-section.dto';
 
 export class CreateIcfDto {
   @ApiProperty({ description: 'ICF title', example: 'Informed Consent' })
@@ -16,6 +19,13 @@ export class CreateIcfDto {
   @IsOptional()
   @IsString()
   description: string;
+
+  @ApiPropertyOptional({ description: 'Structured ICF sections', type: [IcfSectionDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => IcfSectionDto)
+  sections?: IcfSectionDto[];
 
   @ApiProperty({ description: 'Experiment ID', example: '64d2f4a8e5f9b20b1c8a9f10' })
   @IsNotEmpty()

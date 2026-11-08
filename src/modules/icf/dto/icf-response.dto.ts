@@ -3,7 +3,9 @@
  * Licensed under The MIT License [see LICENSE for details]
  */
 
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { IcfSectionDto } from './icf-section.dto';
 
 export class IcfResponseDto {
   @ApiProperty({ description: 'ICF ID', example: '6b1e8c1a-3f7a-4a02-92f9-4b0d7a5d2a11' })
@@ -14,6 +16,13 @@ export class IcfResponseDto {
 
   @ApiProperty({ description: 'ICF description text', example: 'By participating you agree to...' })
   description: string;
+
+  @ApiPropertyOptional({
+    description: 'Structured ICF sections',
+    type: [IcfSectionDto],
+    nullable: true,
+  })
+  sections?: IcfSectionDto[] | null;
 
   @ApiProperty({ description: 'Experiment ID associated with this ICF', example: '64d2f4a8e5f9b20b1c8a9f10' })
   experiment_id: string;
